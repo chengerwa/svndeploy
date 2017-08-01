@@ -36,7 +36,7 @@ public class SvnFileUrlDeal {
     public List<String> addExtSubClass(String ppName,List<String> fileList)throws Exception{
         int size = fileList.size();
         for (int i = 0; i < size; i++) {
-            File f = new File(ResourceUtil.getValue(ppName+"_newWebUrl")+"/"+fileList.get(i));
+            File f = new File(ResourceUtil.getValue(ppName+"_localAppUrl")+"/"+fileList.get(i));
             if(!f.getName().endsWith(".class")){
                 continue;
             }

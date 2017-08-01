@@ -39,7 +39,7 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 
 	private JLabel ftpTitle, ftpUrlLabel, ftpUserLabel, ftpPwdLabel,ftpSysLabel,ftpPortLabel,ftpProtclLabel,ftpUloadDirLabel,ftpLocalDirLabel,ftpShellLabel;
 
-	private JLabel mlysTitle,mlysSysLabel,mlysLocalSrcLable,mlysRemoteSrcLable,mlysLocalWebLable,mlysRemoteWebLable;
+	private JLabel mlysTitle,mlysSysLabel,mlysLocalSrcLable,mlysRemoteSrcLable,mlysLocalWebLable,mlysRemoteWebLable,mlysLocalAppLable;
 
 	private JLabel verPubTaskLabel,verPubSystemLabel;
 
@@ -54,7 +54,7 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 
 	private JTextField svnUrlTf, svnUserTf, svnPwdTf;
 
-	private JTextField mlysLocalSrcTf,mlysRemoteSrcTf,mlysLocalWebTf,mlysRemoteWebTf;
+	private JTextField mlysLocalSrcTf,mlysRemoteSrcTf,mlysLocalWebTf,mlysRemoteWebTf,mlysLocalAppTf;
 
 	private JTextField ftpUrlTf, ftpUserTf, ftpPwdTf,ftpPortTf,ftpUploadDirTf,ftpLocalDirTf,ftpShellTf;
 
@@ -255,15 +255,17 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 		//目录映射
 		mlysTitle = new JLabel("SVN与本地文件映射");
 		mlysSysLabel = new JLabel("系统:");
-		mlysRemoteSrcLable = new JLabel("src远程路径:");
-		mlysLocalSrcLable = new JLabel("src本地路径");
-		mlysRemoteWebLable = new JLabel("web远程目录:");
-		mlysLocalWebLable = new JLabel("web本地目录:");
+		mlysRemoteSrcLable = new JLabel("Java路径(SVN):");
+		mlysLocalSrcLable = new JLabel("本地class路径");
+		mlysRemoteWebLable = new JLabel("Web目录(SVN):");
+		mlysLocalWebLable = new JLabel("Web本地目录:");
+        mlysLocalAppLable = new JLabel("本地应用目录:");
 
 		mlysLocalSrcTf = new JTextField(25);
 		mlysRemoteSrcTf = new JTextField(25);
 		mlysLocalWebTf = new JTextField(25);
 		mlysRemoteWebTf = new JTextField(25);
+		mlysLocalAppTf = new JTextField(25);
 
 		mlysSaveBtn = new Button(1);
 		mlysSaveBtn.addActionListener(this);
@@ -370,25 +372,28 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 		rightPanel.add(BorderLayout.CENTER, svnSetPanel);
 		//snv
 		//目录映射
-		constraints.weighty = 7;
+		constraints.weighty = 8;
 		add(mlysSetPanel,mlysTitle , constraints, 0, 1, 2, 1);
 
 		add(mlysSetPanel, mlysSysLabel, constraints, 0, 2, 1, 1);
 		add(mlysSetPanel, mlysSysJCombox, constraints, 1, 2, 1, 1);
 
-		add(mlysSetPanel, mlysLocalSrcLable, constraints, 0, 3, 1, 1);
-		add(mlysSetPanel, mlysLocalSrcTf, constraints, 1, 3, 1, 1);
+		add(mlysSetPanel, mlysLocalAppLable, constraints, 0, 3, 1, 1);
+		add(mlysSetPanel, mlysLocalAppTf, constraints, 1, 3, 1, 1);
 
-		add(mlysSetPanel, mlysRemoteSrcLable, constraints, 0, 4, 1, 1);
-		add(mlysSetPanel, mlysRemoteSrcTf, constraints, 1, 4, 1, 1);
+		add(mlysSetPanel, mlysLocalSrcLable, constraints, 0, 4, 1, 1);
+		add(mlysSetPanel, mlysLocalSrcTf, constraints, 1, 4, 1, 1);
 
-		add(mlysSetPanel, mlysLocalWebLable, constraints, 0, 5, 1, 1);
-		add(mlysSetPanel, mlysLocalWebTf, constraints, 1, 5, 1, 1);
+		add(mlysSetPanel, mlysRemoteSrcLable, constraints, 0, 5, 1, 1);
+		add(mlysSetPanel, mlysRemoteSrcTf, constraints, 1, 5, 1, 1);
 
-		add(mlysSetPanel, mlysRemoteWebLable, constraints, 0, 6, 1, 1);
-		add(mlysSetPanel, mlysRemoteWebTf, constraints, 1, 6, 1, 1);
+		add(mlysSetPanel, mlysLocalWebLable, constraints, 0, 6, 1, 1);
+		add(mlysSetPanel, mlysLocalWebTf, constraints, 1, 6, 1, 1);
 
-		add(mlysSetPanel, mlysSaveBtn, constraints, 0, 7, 2, 1);
+		add(mlysSetPanel, mlysRemoteWebLable, constraints, 0, 7, 1, 1);
+		add(mlysSetPanel, mlysRemoteWebTf, constraints, 1, 7, 1, 1);
+
+		add(mlysSetPanel, mlysSaveBtn, constraints, 0, 8, 2, 1);
 		//ftp
 		constraints.weighty = 11;
 		int rowIndex = 1;
@@ -677,12 +682,13 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 			String mlysRemoteSrc = mlysRemoteSrcTf.getText().trim();
 			String mlysLocalWeb = mlysLocalWebTf.getText().trim();
 			String mlysRemoteWeb = mlysRemoteWebTf.getText().trim();
+			String mlysLocalApp = mlysLocalAppTf.getText().trim();
 			if(null == mlysLocalSrc || "".equals(mlysLocalSrc)){
-				JOptionPane.showMessageDialog(mlysSetPanel,"请输入本地src目录");
+				JOptionPane.showMessageDialog(mlysSetPanel,"请输入本地class文件的相对路径");
 				return;
 			}
 			if(null == mlysRemoteSrc || "".equals(mlysRemoteSrc)){
-				JOptionPane.showMessageDialog(mlysSetPanel,"请输入svn目录");
+				JOptionPane.showMessageDialog(mlysSetPanel,"请输入svn对应的java源码目录");
 				return;
 			}
 			if(null == mlysLocalWeb || "".equals(mlysLocalWeb)){
@@ -690,7 +696,11 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 				return;
 			}
 			if(null == mlysRemoteWeb || "".equals(mlysRemoteWeb)){
-				JOptionPane.showMessageDialog(mlysSetPanel,"请输入SVN目录");
+				JOptionPane.showMessageDialog(mlysSetPanel,"请输入SVN对应的web目录");
+				return;
+			}
+			if(null == mlysLocalApp || "".equals(mlysLocalApp)){
+				JOptionPane.showMessageDialog(mlysSetPanel,"请输入本地应用目录");
 				return;
 			}
 			String svnSystemCode = mlysSysJCombox.getSelectedItem().toString();
@@ -699,6 +709,7 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 
 			ResourceUtil.storeValue(svnSystemCode+"_oldWebUrl",mlysRemoteWeb);
 			ResourceUtil.storeValue(svnSystemCode+"_newWebUrl",mlysLocalWeb);
+			ResourceUtil.storeValue(svnSystemCode+"_localAppUrl",mlysLocalApp);
 
 			JOptionPane.showMessageDialog(mlysSetPanel,"保存成功");
 		}catch (Exception ex){
@@ -877,6 +888,11 @@ public class MainView extends JFrame implements ActionListener, MouseListener,It
 		}catch (Exception e){
 			mlysRemoteWebTf.setText("");
 		}
+        try {
+            mlysLocalAppTf.setText(ResourceUtil.getValue(mlysSystemCode+"_localAppUrl"));
+        }catch (Exception e){
+            mlysLocalAppTf.setText("");
+        }
 	}
 	public void initFtpData(){
 		ftpProtclJcombox = new JComboBox();

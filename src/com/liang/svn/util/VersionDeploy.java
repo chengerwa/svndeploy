@@ -21,13 +21,16 @@ public class VersionDeploy {
         String ppName = systemCode;
         String rtMsg = "";
         String localUploadDir = "";//升级包解压后的webapp目录
+        boolean successFlag = true;
         try {
             SvnFileGet svn = new SvnFileGet(ppName);
             List<String> fileList = svn.getLogByMessage(taskName,true);
             //加工处理path
             fileList = new SvnFileUrlDeal().getLocalFileList(fileList,ppName);
             //输出到本地目录，以便后续打增量包
-            String localPath = ResourceUtil.getValue(ppName+"_ftpLocalDir");
+            String localPath = ResourceUtil.getValue(ppName+"_ftpLocalDir")+"/"+taskName;
+            File f = new File(localPath);
+            f.mkdirs();
             System.out.println(localPath+"---"+localPath.replace("\\\\","//"));
             System.out.println(localPath+"---"+localPath.replaceAll("\\\\","//"));
             //清单文件
@@ -50,14 +53,9 @@ public class VersionDeploy {
             Process procJar = null;
             Process procUnJar = null;
             String localJarPath = targetDirPath+"/"+ppName+".jar";
-            String[] cmd = {"cmd", "/k", localPath.substring(0,1)+":& cd "+ResourceUtil.getValue(ppName+"_newWebUrl")+" & jar -cvf "+localJarPath+ " @"+filePath};
+            String[] cmd = {"cmd", "/k", localPath.substring(0,1)+":& cd "+ResourceUtil.getValue(ppName+"_localAppUrl")+" & jar -cvf "+localJarPath+ " @"+filePath};
             System.out.println(Arrays.toString( cmd ));
             procJar=Runtime.getRuntime().exec(cmd);
-            try {
-                procJar = Runtime.getRuntime().exec(cmd);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             stdin = procJar.getInputStream();
             procJar.getOutputStream().close();//加上这2句即可解决
             procJar.getErrorStream().close();
@@ -82,6 +80,7 @@ public class VersionDeploy {
                 localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"target")).getParent();
             }
         }catch(Exception e){
+            successFlag = false;
             rtMsg = "发布失败:"+e.getMessage();
             e.printStackTrace();
         }finally {
@@ -101,6 +100,9 @@ public class VersionDeploy {
                 }catch (Exception e){rtMsg = "发布失败:"+e.getMessage();}
             }
             try {
+                if(!successFlag){
+                    return rtMsg;
+                }
                 //开始上传 增量jar
                 System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 上传增量包到服务器。"+ ResourceUtil.getValue(ppName+"_ftpip")+" "+ResourceUtil.getValue(ppName+"_ftpuploadDir"));
                 String ftpIp = ResourceUtil.getValue(ppName+"_ftpip");

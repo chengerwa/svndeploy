@@ -47,6 +47,7 @@ public class FtpUtil {
 
 
             //进入服务器指定的文件夹
+            //sftp.mkdir(destFile);
             sftp.cd(destFile);
             copyFile(sftp,new File(orgFile),sftp.pwd());
 //            //列出服务器指定的文件列表
@@ -72,6 +73,7 @@ public class FtpUtil {
 //            instream.close();
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         } finally {
             session.disconnect();
             channel.disconnect();
