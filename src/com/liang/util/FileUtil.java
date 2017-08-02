@@ -337,7 +337,7 @@ public class FileUtil {
      * @param destDir
      */
 
-    public static void unZip(String zipfile, String destDir) {
+    public static void unZip(String zipfile, String destDir) throws Exception {
 
         destDir = destDir.endsWith("\\") ? destDir : destDir + "\\";
 
@@ -388,7 +388,7 @@ public class FileUtil {
         } catch (IOException e) {
 
             e.printStackTrace();
-
+            throw e;
         }
 
     }

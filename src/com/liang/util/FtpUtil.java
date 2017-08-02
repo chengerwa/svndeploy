@@ -47,8 +47,8 @@ public class FtpUtil {
 
 
             //进入服务器指定的文件夹
-            //sftp.mkdir(destFile);
             sftp.cd(destFile);
+            //清理下面的文件
             copyFile(sftp,new File(orgFile),sftp.pwd());
 //            //列出服务器指定的文件列表
 //            Vector v = sftp.ls("*.txt");
@@ -91,8 +91,7 @@ public class FtpUtil {
                     sftp.mkdir(fileName);
                     System.out.println("目录创建成功:" + sftp.pwd() + "/" + fileName);
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    throw e;
+                    //throw e;
                 }
                 pwd = pwd + "/" + file.getName();
                 try {

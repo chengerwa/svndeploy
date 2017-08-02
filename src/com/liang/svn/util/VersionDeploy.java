@@ -15,9 +15,6 @@ import java.util.jar.Manifest;
  */
 public class VersionDeploy {
     public String deploy(String taskName,String systemCode){
-        InputStream stdin = null;
-        InputStreamReader isr = null;
-        BufferedReader br = null;
         String ppName = systemCode;
         String rtMsg = "";
         String localUploadDir = "";//升级包解压后的webapp目录
@@ -50,29 +47,40 @@ public class VersionDeploy {
 
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-            Process procJar = null;
-            Process procUnJar = null;
+            Process proc = null;
             String localJarPath = targetDirPath+"/"+ppName+".jar";
             String[] cmd = {"cmd", "/k", localPath.substring(0,1)+":& cd "+ResourceUtil.getValue(ppName+"_localAppUrl")+" & jar -cvf "+localJarPath+ " @"+filePath};
             System.out.println(Arrays.toString( cmd ));
-            procJar=Runtime.getRuntime().exec(cmd);
-            stdin = procJar.getInputStream();
-            procJar.getOutputStream().close();//加上这2句即可解决
-            procJar.getErrorStream().close();
-            isr = new InputStreamReader(stdin,"GBK");
-            br = new BufferedReader(isr);
-
+            proc=Runtime.getRuntime().exec(cmd);
+            InputStream stdin = proc.getInputStream();
+            InputStreamReader isr = new InputStreamReader(stdin,"GBK");
+            BufferedReader br = new BufferedReader(isr);
+            String line = null;
+            System.out.println("<output></output>");
+            while ((line = br.readLine()) != null && !"".equals(br.readLine().trim())) {
+                System.out.println(line);
+            }
+            proc.destroy();
             System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> jar包生成完毕。");
             //解压
+            while(!new File(localJarPath).exists()){
+                Thread.sleep(2000);
+            }
             String tmpUploadDir = targetDirPath+"/"+ppName+"_"+taskName;
             File uploadTmpDir  = new File(tmpUploadDir);
             uploadTmpDir.mkdirs();
             String[] cmds = {"cmd", "/k", localPath.substring(0,1)+":& cd "+tmpUploadDir+" & jar xvf "+localJarPath};
             System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 开始解压"+ Arrays.toString(cmds));
-            procUnJar=Runtime.getRuntime().exec(cmds);
-            procUnJar.getOutputStream().close();//加上这2句即可解决
-            procUnJar.getErrorStream().close();
-
+            proc=Runtime.getRuntime().exec(cmds);
+            stdin = proc.getInputStream();
+            isr = new InputStreamReader(stdin,"GBK");
+            br = new BufferedReader(isr);
+            line = null;
+            System.out.println("<output></output>");
+            while ((line = br.readLine()) != null && !"".equals(line) && line.length() > 10) {
+                System.out.println(line);
+            }
+            proc.destroy();
             System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> jar解压完毕。");
             localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"META-INF")).getParent();
             //上传路径直接修改为meta-info 同级目录
@@ -86,31 +94,24 @@ public class VersionDeploy {
             rtMsg = "发布失败:"+e.getMessage();
             e.printStackTrace();
         }finally {
-            if(null != stdin){
-                try {
-                    stdin.close();
-                }catch (Exception e){rtMsg = "发布失败:"+e.getMessage();}
-            }
-            if(null != isr){
-                try {
-                    isr.close();
-                }catch (Exception e){rtMsg = "发布失败:"+e.getMessage();}
-            }
-            if(null != br){
-                try {
-                    br.close();
-                }catch (Exception e){rtMsg = "发布失败:"+e.getMessage();}
-            }
             try {
                 if(!successFlag){
                     return rtMsg;
                 }
-                //开始上传 增量升级文件
-                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 上传增量包到服务器。"+ ResourceUtil.getValue(ppName+"_ftpip")+" "+ResourceUtil.getValue(ppName+"_ftpuploadDir"));
+                //清理服务器上传文件夹
+                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 文件已成功上传到服务器");
+                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 开始执行脚本服务，升级文件");
+                //执行shell
                 String ftpIp = ResourceUtil.getValue(ppName+"_ftpip");
                 String ftpUser = ResourceUtil.getValue(ppName+"_ftpuser");
                 String ftpPwd = ResourceUtil.getValue(ppName+"_ftppwd");
                 int ftpPort = Integer.parseInt(ResourceUtil.getValue(ppName+"_ftpport"));
+                ShellUtil shellUtil = new ShellUtil(ftpIp,ftpUser,ftpPwd);
+                ShellUtil.charset = "GBK";
+                shellUtil.exec("rm -rf "+ResourceUtil.getValue(ppName+"_ftpuploadDir")+"/*");
+                //开始上传 增量升级文件
+                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 上传增量包到服务器。"+ ResourceUtil.getValue(ppName+"_ftpip")+" "+ResourceUtil.getValue(ppName+"_ftpuploadDir"));
+
                 File uploadFile = new File (localUploadDir);
                 File[] fileList = uploadFile.listFiles();
                 for (int i = 0; i < fileList.length; i++) {
@@ -125,10 +126,7 @@ public class VersionDeploy {
                             ResourceUtil.getValue(ppName+"_ftpuploadDir"),
                             ResourceUtil.getValue(ppName+"_ftpprotocol"));
                 }
-                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 文件已成功上传到服务器");
-                System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 开始执行停服务，升级文件");
-                //执行shell
-                ShellUtil shellUtil = new ShellUtil(ftpIp,ftpUser,ftpPwd);
+
                 ShellUtil.charset = "GBK";
                 shellUtil.exec(ResourceUtil.getValue(ppName+"_ftpshell"));
                 rtMsg = "发布成功";
@@ -138,6 +136,28 @@ public class VersionDeploy {
     }
 
     public static void main(String[] args) {
-        new VersionDeploy().deploy("TASK-31471","spay-manage");
+        try{
+            InputStreamReader isr = null;
+            BufferedReader br = null;
+            String line = null;
+            String[] cmds = {"cmd", "/k", "E:& cd E:\\soft\\ideaworkspace\\yr\\updateFiles/payment9.4/payment_payment9.4 & jar xvf E:\\soft\\ideaworkspace\\yr\\updateFiles/payment9.4/payment.jar"};
+            System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 开始解压"+ Arrays.toString(cmds));
+            InputStream stdin = null;
+            Process proc=Runtime.getRuntime().exec(cmds);
+            stdin = proc.getInputStream();
+            isr = new InputStreamReader(stdin,"GBK");
+            br = new BufferedReader(isr);
+            line = null;
+            System.out.println("<output></output>");
+            while ((line = br.readLine()) != null && !"".equals(line.trim()) && line.length()>10) {
+                System.out.println( line );
+                System.out.println("------00000-------");
+            }
+            System.out.println("-----|||||||||||||||||||||||||||||||||||||||||||||---");
+            System.out.println("-------------");
+            proc.destroy();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
