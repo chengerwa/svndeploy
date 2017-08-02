@@ -74,11 +74,13 @@ public class VersionDeploy {
             procUnJar.getErrorStream().close();
 
             System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> jar解压完毕。");
-            localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"WEB-INF")).getParent();
-            if(null == localUploadDir || "".equals(localUploadDir)){
-                //maven 项目
-                localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"target")).getParent();
-            }
+            localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"META-INF")).getParent();
+            //上传路径直接修改为meta-info 同级目录
+//            if(null == localUploadDir || "".equals(localUploadDir)){
+//                //maven 项目
+//                localUploadDir = new File(new FileUtil().getSubDirPath(tmpUploadDir,"target")).getParent();
+//            }modify 2017/08/02，上传路径直接修改为解压文件路径
+            //localUploadDir = tmpUploadDir;
         }catch(Exception e){
             successFlag = false;
             rtMsg = "发布失败:"+e.getMessage();
@@ -103,19 +105,26 @@ public class VersionDeploy {
                 if(!successFlag){
                     return rtMsg;
                 }
-                //开始上传 增量jar
+                //开始上传 增量升级文件
                 System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 上传增量包到服务器。"+ ResourceUtil.getValue(ppName+"_ftpip")+" "+ResourceUtil.getValue(ppName+"_ftpuploadDir"));
                 String ftpIp = ResourceUtil.getValue(ppName+"_ftpip");
                 String ftpUser = ResourceUtil.getValue(ppName+"_ftpuser");
                 String ftpPwd = ResourceUtil.getValue(ppName+"_ftppwd");
                 int ftpPort = Integer.parseInt(ResourceUtil.getValue(ppName+"_ftpport"));
-                FtpUtil.upload(ftpIp,
-                        ftpUser,
-                        ftpPwd,
-                        ftpPort,
-                        localUploadDir,
-                        ResourceUtil.getValue(ppName+"_ftpuploadDir"),
-                        ResourceUtil.getValue(ppName+"_ftpprotocol"));
+                File uploadFile = new File (localUploadDir);
+                File[] fileList = uploadFile.listFiles();
+                for (int i = 0; i < fileList.length; i++) {
+                    if(fileList[i].getName().endsWith("META-INF")){
+                        continue;
+                    }
+                    FtpUtil.upload(ftpIp,
+                            ftpUser,
+                            ftpPwd,
+                            ftpPort,
+                            fileList[i].getAbsolutePath(),
+                            ResourceUtil.getValue(ppName+"_ftpuploadDir"),
+                            ResourceUtil.getValue(ppName+"_ftpprotocol"));
+                }
                 System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 文件已成功上传到服务器");
                 System.out.println(DateUtil.getDateTime(DateUtil.YEAR_TO_SECOND)+"*** --> 开始执行停服务，升级文件");
                 //执行shell

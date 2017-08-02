@@ -79,7 +79,7 @@ public class FtpUtil {
             channel.disconnect();
         }
     }
-    public static void copyFile(ChannelSftp sftp, File file, String pwd) {
+    public static void copyFile(ChannelSftp sftp, File file, String pwd) throws Exception {
 
         if (file.isDirectory()) {
             File[] list = file.listFiles();
@@ -91,31 +91,30 @@ public class FtpUtil {
                     sftp.mkdir(fileName);
                     System.out.println("目录创建成功:" + sftp.pwd() + "/" + fileName);
                 } catch (Exception e) {
-                    // TODO: handle exception
+                    e.printStackTrace();
+                    throw e;
                 }
                 pwd = pwd + "/" + file.getName();
                 try {
 
                     sftp.cd(file.getName());
                 } catch (SftpException e) {
-                    // TODO: handle exception
                     e.printStackTrace();
+                    throw e;
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
+                throw e;
             }
             for (int i = 0; i < list.length; i++) {
                 copyFile(sftp, list[i], pwd);
             }
         } else {
-
             try {
                 sftp.cd(pwd);
-
             } catch (SftpException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
+                throw e1;
             }
             System.out.println("正在复制文件:" + file.getAbsolutePath());
             InputStream instream = null;
@@ -131,25 +130,24 @@ public class FtpUtil {
                         outstream.write(b, 0, n);
                     }
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
+                    throw e;
                 }
 
             } catch (SftpException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
+                throw e;
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
+                throw e;
             } finally {
                 try {
                     outstream.flush();
                     outstream.close();
                     instream.close();
-
                 } catch (Exception e2) {
-                    // TODO: handle exception
                     e2.printStackTrace();
+                    throw e2;
                 }
             }
         }
